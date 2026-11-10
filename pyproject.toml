@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cursor-cli-openai-api"
+dynamic = ["version"]
+description = "Cursor CLI (agent / cursor-agent) を OpenAI 互換 API (/v1/chat/completions, /v1/responses) として使うためのローカルサーバー"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+]
+
+[project.urls]
+Homepage = "https://github.com/check5004/cursor-cli-openai-api"
+
+[project.scripts]
+cursor-openai-api = "cursor_openai_api.__main__:main"
+
+[tool.setuptools]
+packages = ["cursor_openai_api"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cursor_openai_api.__version__" }
