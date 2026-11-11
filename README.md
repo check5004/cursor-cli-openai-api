@@ -1,37 +1,119 @@
+<p align="center">
+  <img src="docs/images/hero.svg" alt="cursor-cli-openai-api：あなたのアプリ → OpenAI 互換ブリッジ（localhost:8765/v1）→ Cursor CLI → Cursor のモデル" width="100%">
+</p>
+
+<p align="center">
+  <img alt="Python 3.9+" src="https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&amp;logoColor=white">
+  <img alt="対応 OS" src="https://img.shields.io/badge/OS-Windows%20%7C%20WSL%20%7C%20macOS%20%7C%20Linux-0f766e">
+  <img alt="依存パッケージ 0" src="https://img.shields.io/badge/dependencies-0-16a34a">
+  <img alt="OpenAI 互換" src="https://img.shields.io/badge/API-OpenAI%20compatible-7c3aed">
+  <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-2563eb">
+</p>
+
 # cursor-cli-openai-api
 
-Cursor CLI（`agent` / `cursor-agent`）を **OpenAI 互換 API** として使えるようにするローカルサーバーです。
-
-OpenAI の API キーを発行する前でも、Cursor のサブスクリプション（会社の Teams / Business プランなど）を使って、
-OpenAI SDK で書いたアプリの結合テストや動作確認ができます。アプリ側は `base_url` を変えるだけです。
+**Cursor CLI を OpenAI 互換 API にする、ローカル専用のブリッジサーバーです。**
+OpenAI の API キーがまだ無くても、会社の Cursor のサブスクで、OpenAI SDK を使うアプリをそのまま動かしてテストできます。
 
 > [!WARNING]
 > 非公式ツールです。Cursor（Anysphere, Inc.）および OpenAI とは関係ありません。
 > 使い始める前に [利用規約と注意事項](#利用規約と注意事項必ずお読みください) を必ず読んでください。
 
+## これは何？
+
+こんなときのためのツールです。
+
+- 🧑‍💻 OpenAI API を使うアプリを作っているが、**API キーの発行（社内申請など）を待っている**
+- 🏢 でも、会社で **Cursor は契約している**
+- ✅ SDK の呼び出し・ストリーミング・Function calling の流れを、**キーが届く前に確かめておきたい**
+
+アプリから見ると「OpenAI API と同じ形の API」が手元（`localhost`）にあるだけです。裏では Cursor CLI が、あなたの Cursor の契約で答えを作ります。
+
+```mermaid
+flowchart LR
+    app["🧑‍💻 あなたのアプリ<br/><small>OpenAI SDK / curl / LangChain</small>"]
+    bridge["🌉 cursor-cli-openai-api<br/><small>http://localhost:8765/v1</small>"]
+    cli["⌨️ Cursor CLI<br/><small>agent -p（読み取り専用の ask モード）</small>"]
+    cursor["☁️ Cursor のモデル<br/><small>会社のサブスクの利用枠</small>"]
+    openai["🔑 OpenAI API<br/><small>API キー発行後</small>"]
+
+    app -- "OpenAI 互換の HTTP" --> bridge
+    bridge -- "プロンプトに変換して起動" --> cli
+    cli --> cursor
+    app -. "キー発行後は環境変数を<br/>戻すだけで切り替え" .-> openai
+
+    classDef bridgeNode fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+    classDef later fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:4 4
+    class bridge bridgeNode
+    class openai later
+```
+
 ## 特徴
 
-- `POST /v1/chat/completions`：ストリーミング、Function calling（tools）、JSON モード / Structured Outputs
-- `POST /v1/responses`：ストリーミング、function tools、`previous_response_id`
-- `GET /v1/models`：Cursor で使えるモデル一覧
-- **Python 標準ライブラリのみ**で動作（`pip install` 不要。Python 3.9 以上）
-- **Windows（ネイティブ / WSL）・macOS・Linux** に対応
-- 公式 OpenAI SDK（Python / Node.js）で動作を確認済み（`chat.completions.parse` や `responses.stream` などのヘルパーも動きます）
-- 安全寄りの既定値：Cursor CLI を **読み取り専用の ask モード**で、**リクエストごとの空の一時フォルダ**で実行し、待ち受けは `127.0.0.1` のみ
+| 機能 | 内容 |
+| --- | --- |
+| 🔌 **OpenAI 互換** | `/v1/chat/completions`・`/v1/responses`・`/v1/models`。公式 SDK（Python / Node.js）で動作確認済み（`chat.completions.parse` や `responses.stream` などのヘルパーも動きます） |
+| 🌊 **ストリーミング** | SSE で少しずつ届きます。`stream_options.include_usage` にも対応 |
+| 🛠️ **Function calling / JSON モード** | `tools`・`tool_choice`・`response_format`（Structured Outputs）をプロンプトで再現 |
+| 🪶 **依存パッケージなし** | Python 標準ライブラリだけで動作。`pip install` 不要（Python 3.9 以上） |
+| 💻 **マルチ OS** | Windows（ネイティブ / WSL）・macOS・Linux |
+| 🛡️ **安全寄りの既定値** | 読み取り専用の ask モード、リクエストごとの空の一時フォルダ、`127.0.0.1` だけで待ち受け |
+
+## 3 ステップで試す
+
+```bash
+agent login                                   # 1. Cursor CLI にログイン（初回のみ）
+./scripts/start.sh                            # 2. ブリッジを起動（Windows は scripts\start.cmd）
+export OPENAI_BASE_URL=http://localhost:8765/v1  # 3. 向き先を変えて、いつも通りアプリを起動
+export OPENAI_API_KEY=dummy
+```
+
+インストールから順に知りたい場合は [セットアップ](#セットアップ) へ。
 
 ## 仕組み
 
-```
-あなたのアプリ（OpenAI SDK など）
-    │  HTTP（OpenAI 互換）
-    ▼
-cursor-openai-api（このサーバー）          … messages をプロンプトに変換し、応答を OpenAI 形式に戻す
-    │  agent -p --output-format stream-json --stream-partial-output --trust --mode ask "<prompt>"
-    ▼
-Cursor CLI ──▶ Cursor のモデル（あなたの Cursor アカウントの利用枠を消費）
-```
+### リクエスト 1 回の流れ
 
 Cursor CLI は 1 回の実行が独立した会話なので、毎回これまでの会話（system / user / assistant / tool）をまとめて 1 本のプロンプトにして渡します。
+CLI の出力（NDJSON）を受け取りながら、OpenAI 形式の SSE に変換してアプリへ流します。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as 🧑‍💻 あなたのアプリ
+    participant Bridge as 🌉 ブリッジ
+    participant CLI as ⌨️ Cursor CLI
+    participant Cursor as ☁️ Cursor
+
+    App->>Bridge: POST /v1/chat/completions（stream: true）
+    Note over Bridge: messages・tools・response_format を<br/>1 本のプロンプトに変換し、空の一時フォルダを用意
+    Bridge->>CLI: agent -p --output-format stream-json<br/>--stream-partial-output --mode ask
+    CLI->>Cursor: 推論
+    loop 生成中
+        Cursor-->>CLI: テキストの断片
+        CLI-->>Bridge: NDJSON（assistant イベント）
+        Bridge-->>App: SSE（chat.completion.chunk）
+    end
+    CLI-->>Bridge: result イベント
+    Bridge-->>App: finish_reason と data: [DONE]
+    Note over Bridge: 一時フォルダを削除<br/>（切断・タイムアウト時は CLI も停止）
+```
+
+### Function calling の再現
+
+Cursor CLI には「関数を呼ぶ」仕組みが無いため、プロンプトで JSON 形式の返答を指示し、それを OpenAI 形式の `tool_calls` に変換しています。
+JSON モード / Structured Outputs も同じ考え方で、返答からコードブロックなどを取り除いて JSON だけを返します。
+
+```mermaid
+flowchart LR
+    req["📨 リクエスト<br/>tools: get_weather など"] --> prompt["📝 プロンプトに関数の一覧と<br/>「呼ぶときは JSON だけを返す」という指示を追加"]
+    prompt --> model["☁️ Cursor のモデルが回答"]
+    model --> check{"tool_calls の<br/>JSON を返した？"}
+    check -- "はい" --> tc["🛠️ OpenAI 形式の tool_calls に変換<br/>finish_reason: tool_calls"]
+    check -- "いいえ" --> text["💬 普通のテキスト回答<br/>finish_reason: stop"]
+    tc --> run["🧑‍💻 アプリが関数を実行し<br/>role: tool で結果を送る"]
+    run -. "次のリクエスト" .-> req
+```
 
 ## セットアップ
 
@@ -96,6 +178,30 @@ pipx install git+https://github.com/check5004/cursor-cli-openai-api.git
 cursor-openai-api --port 8765
 ```
 
+#### どこで何が動くか
+
+ブリッジと Cursor CLI は **同じ環境** で動かします（Windows の CLI を WSL のブリッジから呼ぶ、のような組み合わせはできません）。
+
+```mermaid
+flowchart LR
+    subgraph wsl["🪟 Windows ＋ WSL2"]
+        direction LR
+        a3["Windows 側のアプリ"] -- "localhost:8765<br/>（WSL2 の localhost 転送）" --> b3
+        subgraph ubuntu["🐧 WSL（Ubuntu など）"]
+            direction LR
+            b3["ブリッジ<br/><small>./scripts/start.sh</small>"] --> c3["Cursor CLI"]
+        end
+    end
+    subgraph win["🪟 Windows（ネイティブ）"]
+        direction LR
+        a2["アプリ"] --> b2["ブリッジ<br/><small>scripts\start.cmd</small>"] --> c2["Cursor CLI<br/><small>LOCALAPPDATA\cursor-agent</small>"]
+    end
+    subgraph mac["🍎 macOS ／ 🐧 Linux"]
+        direction LR
+        a1["アプリ"] --> b1["ブリッジ<br/><small>./scripts/start.sh</small>"] --> c1["Cursor CLI<br/><small>~/.local/bin/agent</small>"]
+    end
+```
+
 #### WSL で動かす場合の補足
 
 - WSL2 では、WSL 内で起動したサーバーに **Windows 側のアプリからも `http://localhost:8765/v1` でつながります**（localhost 転送）。
@@ -122,6 +228,10 @@ $env:OPENAI_API_KEY = "dummy"
 ```
 
 本物の API キーが発行されたら、これらの環境変数を本物の値に戻すだけで移行できます。
+
+<p align="center">
+  <img src="docs/images/switch.svg" alt="いまはアプリ → ブリッジ → Cursor。API キー発行後は OPENAI_BASE_URL を削除して本物のキーを設定するだけで、アプリ → OpenAI API に切り替わる" width="100%">
+</p>
 
 ### Python
 
@@ -168,6 +278,19 @@ LangChain の `ChatOpenAI(base_url=..., api_key=...)` など、OpenAI 互換の 
 | Cursor のモデル ID（例: `auto`。`GET /v1/models` や `agent models` で確認） | そのモデル |
 | `--model-map` で読み替えを設定した名前（例: `gpt-4o`） | 読み替え先のモデル |
 | それ以外（例: アプリに書いてある `gpt-4o-mini`） | 既定モデルで実行（`--strict-models` を付けると 404 を返す） |
+
+```mermaid
+flowchart LR
+    m["リクエストの model"] --> d{"default<br/>または省略？"}
+    d -- "はい" --> def["既定モデル<br/><small>--default-model（未設定なら CLI の既定）</small>"]
+    d -- "いいえ" --> map{"--model-map に<br/>ある？"}
+    map -- "はい" --> mapped["読み替え先のモデル"]
+    map -- "いいえ" --> known{"Cursor のモデル<br/>一覧にある？"}
+    known -- "はい" --> same["そのモデル"]
+    known -- "いいえ" --> strict{"--strict-models<br/>を指定？"}
+    strict -- "はい" --> e404["❌ 404 model_not_found"]
+    strict -- "いいえ" --> def
+```
 
 - 応答 JSON の `model` には、リクエストで指定した名前をそのまま返します。実際に使ったモデルはレスポンスヘッダー `x-cursor-model` で分かります。
 - 例：`--model-map "gpt-4o=sonnet-4.5,gpt-4o-mini=auto"`（モデル ID はプランや時期で変わるので `agent models` で確認してください）

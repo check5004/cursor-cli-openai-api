@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 470" width="1280" height="470" role="img" aria-labelledby="title desc">
+  <title id="title">API キー発行後の切り替えイメージ</title>
+  <desc id="desc">いまはアプリからブリッジ経由で Cursor を使い、API キー発行後は環境変数を差し替えるだけで OpenAI API に切り替えられることを示す図。</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#17153a"/>
+    </linearGradient>
+    <pattern id="grid2" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04"/>
+    </pattern>
+    <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#94a3b8"/>
+    </marker>
+    <linearGradient id="bigArrow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <clipPath id="frame2"><rect width="1280" height="470" rx="28"/></clipPath>
+  </defs>
+  <style>
+    .jp { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", "IPAPGothic", sans-serif; }
+    .mono { font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", "Consolas", "Menlo", "DejaVu Sans Mono", monospace; }
+    .flow { stroke-dasharray: 5 7; animation: flow 1.2s linear infinite; }
+    .nudge { animation: nudge 1.8s ease-in-out infinite; }
+    @keyframes flow { to { stroke-dashoffset: -24; } }
+    @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+    @media (prefers-reduced-motion: reduce) { .flow, .nudge { animation: none; } }
+  </style>
+
+  <g clip-path="url(#frame2)">
+    <rect width="1280" height="470" fill="url(#bg2)"/>
+    <rect width="1280" height="470" fill="url(#grid2)"/>
+  </g>
+
+  <text x="640" y="62" class="jp" font-size="27" font-weight="700" fill="#f1f5f9" text-anchor="middle">API キーが発行されたら、環境変数を差し替えるだけ</text>
+  <text x="640" y="96" class="jp" font-size="16" fill="#94a3b8" text-anchor="middle">公式 OpenAI SDK は OPENAI_BASE_URL / OPENAI_API_KEY を読むので、アプリのコードは変更不要です</text>
+
+  <!-- 左: いま -->
+  <rect x="56" y="124" width="530" height="290" rx="20" fill="#0f172a" stroke="#2dd4bf" stroke-opacity="0.55" stroke-width="2"/>
+  <rect x="80" y="144" width="196" height="30" rx="15" fill="#2dd4bf" fill-opacity="0.16"/>
+  <text x="178" y="165" class="jp" font-size="15" font-weight="700" fill="#5eead4" text-anchor="middle">いま（API キー発行前）</text>
+
+  <g class="jp" font-size="15" font-weight="700" fill="#e2e8f0" text-anchor="middle">
+    <rect x="80" y="198" width="140" height="56" rx="12" fill="#1e293b" stroke="#475569"/>
+    <text x="150" y="232">アプリ</text>
+    <rect x="252" y="198" width="140" height="56" rx="12" fill="#2a1f5c" stroke="#a78bfa"/>
+    <text x="322" y="224">ブリッジ</text>
+    <text x="322" y="243" class="mono" font-size="11" font-weight="400" fill="#c4b5fd">localhost:8765</text>
+    <rect x="424" y="198" width="140" height="56" rx="12" fill="#1e293b" stroke="#475569"/>
+    <text x="494" y="224">Cursor</text>
+    <text x="494" y="243" font-size="11" font-weight="400" fill="#94a3b8">サブスクで実行</text>
+  </g>
+  <g fill="none" stroke="#94a3b8" stroke-width="2.5">
+    <line x1="222" y1="226" x2="248" y2="226" class="flow" marker-end="url(#arr2)"/>
+    <line x1="394" y1="226" x2="420" y2="226" class="flow" marker-end="url(#arr2)"/>
+  </g>
+
+  <rect x="80" y="278" width="484" height="112" rx="12" fill="#020617" stroke="#1e293b"/>
+  <g class="mono" font-size="15">
+    <text x="102" y="312" fill="#64748b"># .env / 環境変数</text>
+    <text x="102" y="342"><tspan fill="#7dd3fc">OPENAI_BASE_URL</tspan><tspan fill="#94a3b8">=</tspan><tspan fill="#5eead4">http://localhost:8765/v1</tspan></text>
+    <text x="102" y="370"><tspan fill="#7dd3fc">OPENAI_API_KEY</tspan><tspan fill="#94a3b8">=</tspan><tspan fill="#5eead4">dummy</tspan></text>
+  </g>
+
+  <!-- 中央の矢印 -->
+  <g class="nudge">
+    <path d="M604 250 h38 v-20 l34 39 l-34 39 v-20 h-38 z" fill="url(#bigArrow)"/>
+  </g>
+  <text x="640" y="342" class="jp" font-size="14" font-weight="700" fill="#cbd5e1" text-anchor="middle">差し替え</text>
+
+  <!-- 右: あとで -->
+  <rect x="694" y="124" width="530" height="290" rx="20" fill="#0f172a" stroke="#a78bfa" stroke-opacity="0.55" stroke-width="2"/>
+  <rect x="718" y="144" width="196" height="30" rx="15" fill="#a78bfa" fill-opacity="0.16"/>
+  <text x="816" y="165" class="jp" font-size="15" font-weight="700" fill="#ddd6fe" text-anchor="middle">あとで（API キー発行後）</text>
+
+  <g class="jp" font-size="15" font-weight="700" fill="#e2e8f0" text-anchor="middle">
+    <rect x="766" y="198" width="150" height="56" rx="12" fill="#1e293b" stroke="#475569"/>
+    <text x="841" y="232">アプリ</text>
+    <rect x="1002" y="198" width="170" height="56" rx="12" fill="#1e293b" stroke="#475569"/>
+    <text x="1087" y="224">OpenAI API</text>
+    <text x="1087" y="243" class="mono" font-size="11" font-weight="400" fill="#94a3b8">api.openai.com</text>
+  </g>
+  <g fill="none" stroke="#94a3b8" stroke-width="2.5">
+    <line x1="920" y1="226" x2="996" y2="226" class="flow" marker-end="url(#arr2)"/>
+  </g>
+  <text x="958" y="214" class="jp" font-size="11" fill="#94a3b8" text-anchor="middle">直接</text>
+
+  <rect x="718" y="278" width="484" height="112" rx="12" fill="#020617" stroke="#1e293b"/>
+  <g class="mono" font-size="15">
+    <text x="740" y="312" fill="#64748b"># OPENAI_BASE_URL は削除</text>
+    <text x="740" y="342"><tspan fill="#7dd3fc">OPENAI_API_KEY</tspan><tspan fill="#94a3b8">=</tspan><tspan fill="#fcd34d">sk-...（本物のキー）</tspan></text>
+    <text x="740" y="370" fill="#64748b"># model も本番で使う名前のままで OK</text>
+  </g>
+
+  <g transform="translate(640 445)">
+    <circle cx="-150" cy="-5" r="10" fill="#22c55e" fill-opacity="0.2" stroke="#22c55e"/>
+    <path d="M-155 -5 l4 4 l7 -8" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="-132" y="0" class="jp" font-size="15" font-weight="700" fill="#bbf7d0">アプリのコードは 1 行も変えずに移行できます</text>
+  </g>
+</svg>
